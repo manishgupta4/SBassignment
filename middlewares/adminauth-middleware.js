@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import UserModel from "../models/User.js";
 
-var checkUserAuth = async (req, res, next) => {
+var checkAdminAuth = async (req, res, next) => {
   let token;
   const { authorization } = req.headers;
   if (authorization && authorization.startsWith("Bearer")) {
@@ -14,10 +14,20 @@ var checkUserAuth = async (req, res, next) => {
 
       // Get User from Token
       req.user = await UserModel.findById(userID).select("-password");
+
+      if (req.user.role != "admin") {
+        res.status(201).send({
+          status: "failed",
+          message: "User does not have admin access!",
+        });
+        return;
+      }
+
       next();
     } catch (error) {
       console.log(error);
       res.status(401).send({ status: "failed", message: "Unauthorized User" });
+      return;
     }
   }
   if (!token) {
@@ -27,4 +37,4 @@ var checkUserAuth = async (req, res, next) => {
   }
 };
 
-export default checkUserAuth;
+export default checkAdminAuth;
